@@ -1,0 +1,4 @@
+ls && date;
+date && mkdir ham
+rmdir ham && ls
+exit

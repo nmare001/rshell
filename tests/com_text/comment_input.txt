@@ -1,0 +1,5 @@
+#ls
+ls && #date 
+date
+date || #ls date
+exit

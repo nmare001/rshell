@@ -1,0 +1,8 @@
+ls;
+ls
+date;
+date
+echo "ls -a"
+echo "ls -a";
+test;
+exit
