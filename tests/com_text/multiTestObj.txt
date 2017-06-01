@@ -1,0 +1,7 @@
+test -e tests/com_text && ls
+test -f tests/com_text && ls
+test -d tests/com_text
+test -f tests/com_text/exit_input.txt
+test -d tests/com_text/exit_input.txt
+test -e hiThere
+exit

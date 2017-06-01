@@ -1,0 +1,6 @@
+[-e assignments/commandLine/tests/com_text/exit_input.txt] 
+[-e assignments/commandLine/tests/com_text/exit_input.txt] && [-e assignments/commandLine/tests/com_text]
+[-f assignments/commandLine/tests/com_text/exit_input.txt]
+[-d assignments/commandLine/tests/com_text/exit_input.txt]
+[-f assignments/commandLine/tests/com_text]
+[-d assignments/commandLine/tests/com_text]
