@@ -39,7 +39,6 @@ string Composite::unfinished_mod() {
     string hold;
     print_prompt2();
     getline(cin,hold);
-    check_exit(hold);
     return hold;
 }
 
@@ -82,106 +81,195 @@ string Composite::remove_comment(string str) {
 //checks if the parsed string is supposed to be a logical break
 //return 0 is AndOj
 //return 1 is OrObj
-//return 2 is SemiObj
+//return 2 is Par
 //retun -1 means no logical break in the command
-int Composite::check_break(string str) {
+int Composite::check_break(string& str) {
+    if (str.empty()) return -1;
     if(str == "&&") return 0;
     else if(str == "||") return 1;
-    else if(str == ";") return 2;
+    // else if(str1 == "(") {
+    //     str.erase(0,1);
+    //     return 2;
+    // }
+    //ping();
     return -1;
 }
 
-//removes all the char that come after the comment
-bool Composite::check_semi(string str) {
-    if(str.at(str.size() - 1) == ';') return true;
-    else return false;
+bool Composite::check_Close_par(string& com) {
+    if (com.empty()) return false;
+    string str = com.substr(com.size() - 1,1);
+    if(str == ")") {
+        com.erase(com.size() - 1,1);
+        return true;
+    }
+    return false;
 }
 
-//is called by activate and calls the builkd function which recurses
-//sets up one command and tells build the first logical break object to create
+bool Composite::check_Open_par(string& com) {
+    if (com.empty()) return false;
+    string str = com.substr(1,1);
+    //cout << str << endl;
+    if(str == "(") {
+        //ping();
+        com.erase(0,2);
+        return true;
+    }
+    return false;
+}
+
+bool Composite::check_test(string& com) {
+    if (com.empty()) return false;
+    if (check_bracket(com)) return true;
+    else if (check_path(com)){
+        return true;
+        //cout << "path" << endl;
+    }
+    return false;
+}
+
+bool Composite::check_bracket(string& com) {
+    if (com.empty()) return false;
+    string str = com.substr(1,1);
+    if (str == "["){
+        str = com.substr(2,1);
+        if (str == " ") com.erase(0,3);
+        else com.erase(0,2);
+        str = com.substr(com.size() - 1,1);
+        if(str == "]") {
+            com.erase(com.size() - 1, 1);
+        }
+        return true;
+    }
+    return false;
+}
+
+bool Composite::check_path(string& com) {
+    if (com.empty()) return false;
+    string str = com.substr(1,4);
+    //cout << str << endl;
+    if (str == "test") {
+        str = com.substr(5,1);
+        if (str == " ") com.erase(0,6);
+        else com.erase(0,5);
+        return true;
+    }
+    return false;
+}
+
+bool Composite::check_semi(string& com) {
+    if (com.empty()) return false;
+    string str = com.substr(com.size() - 1, 1);
+    if(str == ";") {
+        com.erase(com.size() - 1,1);
+        return true;
+    }
+    return false;
+}
+
+void Composite::ping() {
+    cout << "ping" << endl;
+}
+
+////11
 void Composite::parse(string pr) {
     string i, com;
     int next_num;
     stringstream tran (pr);
+    shared_ptr<Base> next_com = nullptr;
     
     //loops until there is no more commands to loop
     while (tran >> i) {
+        //cout << "1" << endl;
         //checks if this is a string for a break object, -1 is comamnd string
         next_num = check_break(i);
-        
-        //still making the command, or there is no comment code
+        //cout << next_num << endl;
         if (next_num < 0) {
             com += " ";
             com += i;
-            //at the end of the command check for the semi colon, then points 
-            //to the object
-            if(check_semi(com)) {
-                com.pop_back();//removes the semi colon form the command
-                auto next_com = make_shared<Command> (com);//creates an object
-                baseContainer.push_back(make_shared<SemiObj> (next_com));
+            //cout << com << endl;
+            //ping();
+            if(check_Open_par(com)) {
+                next_com = parenthesis(com,tran);
+                // bool te = next_com->run();
+                // cout << te << endl;
                 com.clear();
-                //pushes back object
             }
         }
         else {
             //if the com is not an empty string this is the primary start for
             //recursion
-            if(!com.empty()) {
-                shared_ptr<Command> next_com = make_shared<Command> (com);
-                build(next_com,next_num,tran);
-                com.clear();
+            if(!com.empty() || next_com != nullptr) {
+                //creates the new pointer 
+                if(check_semi(com)){
+                    next_com = create_command(com);
+                    baseContainer.push_back(next_com);
+                    return;
+                }
+                else {
+                    if(next_com == nullptr) next_com = create_command(com);
+                    shared_ptr<Base> B = create_break(next_com,next_num);
+                    //B->run();
+                    build(B, tran);
+                    //ping();
+                    return;
+                }
             }
         }
     }
     if (!com.empty()){
-        auto next_com = make_shared<Command> (com);
-        baseContainer.push_back(make_shared<SemiObj> (next_com));
+        auto next_com = create_command(com);
+        //ping();
+        baseContainer.push_back(next_com);
+        return;
+    }
+    else {
+        baseContainer.push_back(next_com);
     }
 }
 
-//recursion starts with the left command object and a selected but un made 
-//break object. is recursive to allow for a command string of any length
-//recursion ends after either a semicolon, then it return back to parse
-//or there are no more string command or arguements to read in
-void Composite::build(shared_ptr<Command> A, int num, stringstream& tran) {
+///22
+void Composite::build(shared_ptr<Base> A, stringstream& tran) {
     string i,com;
     int next_num;
+    bool stay = false;
+    shared_ptr<Base> next_com = nullptr;
     
     //loop until there is no string parts to parse through
     while (tran >> i) {
-        
+        //cout << "2" << endl;
         //checks if the current iteration of the command is a break
+        //b1 checking
         next_num = check_break(i);
         //still making the command
         if (next_num < 0) {
             com += " ";
             com += i;
-            //checsk if the semicolon is at the end of the string
-            //might need to change if semicolon is in the middle of a string
-            if(check_semi(com)) {
-                com.pop_back();
-                auto next_com = make_shared<Command> (com);
-                baseContainer.push_back(make_shared<SemiObj> (next_com));
-                return;
+            if(check_Open_par(com)) {
+                next_com = parenthesis(com,tran);
+                stay = true;
+                com.clear();
             }
+            //cout << com << endl;
+            //b2 checking
         }
         else {
             //makes sure there is a command to imput
             if(!com.empty()) {
                 //creates the new pointer 
-                auto next_com = make_shared<Command> (com);
-                //determines the proper break object and then recurses
-                ///RECURSIVE CALLS START HERE
-                if(num == 0) {
-                    baseContainer.push_back(make_shared<AndObj>(A, next_com));
-                    build(next_com,next_num,tran);
+                if(check_semi(com)){
+                    auto next_com = create_command(com);
+                    A->set_right(next_com);
+                    baseContainer.push_back(A);
                     return;
                 }
-                else if(num == 1) {
-                    baseContainer.push_back(make_shared<OrObj>(A, next_com));
-                    build(next_com,next_num,tran);
+                else {
+                    if(next_com == nullptr) next_com = create_command(com);
+                    A->set_right(next_com);
+                    shared_ptr<Base> B = create_break(A,next_num);
+                    build(B, tran);
                     return;
                 }
+                
             }
         }
     }
@@ -189,29 +277,177 @@ void Composite::build(shared_ptr<Command> A, int num, stringstream& tran) {
     //there are no more string to read in and so caps it off as if there was a 
     //semi-colon
     if (!com.empty()){
-        shared_ptr<Command> next_com = make_shared<Command> (com);
-        if(num == 0) {
-            baseContainer.push_back(make_shared<AndObj>(A, next_com));
-            baseContainer.push_back(make_shared<SemiObj> (next_com));
-            return;
-        }
-        else if(num == 1) {
-            baseContainer.push_back(make_shared<OrObj>(A, next_com));
-            baseContainer.push_back(make_shared<SemiObj> (next_com));
-            return;
-        }
+        //cout << com << endl;
+         if(next_com == nullptr) next_com = create_command(com);
+        A->set_right(next_com);
+        baseContainer.push_back(A);
         return;
     }
     ///RECURSIVE CALLS AGIAN
     //makes sure that linking logical objects are never without two children
+    else if(stay) {
+        A->set_right(next_com);
+        baseContainer.push_back(A);
+    }
     else {
         stringstream tra(unfinished_mod());
-        build(A,num,tra);
+        build(A, tra);
         return;
     }
     return;
 }
 
+
+//33
+shared_ptr<Base> Composite::parenthesis(string com, stringstream& tran) {
+    string i;
+    int next_num;
+    shared_ptr<Base> next_com = nullptr;
+    bool cont = check_Close_par(com);
+    //cout << com << endl;
+    //loops until there is no more commands to loop
+    while (tran >> i && !cont) {
+        //checks if this is a string for a break object, -1 is comamnd string
+        //cout << "3" << endl;
+        next_num = check_break(i);
+        //cout << next_num << endl;
+        //still making the command, or there is no comment code
+        if (next_num < 0) {
+            com += " ";
+            com += i;
+            if(check_Open_par(com)) {
+                next_com = parenthesis(com,tran);
+                com.clear();
+            }
+            else {
+                cont = check_Close_par(com);
+                break;
+            }
+            //b2 checking
+        }
+        else {
+            //if the com is not an empty string this is the primary start for
+            //recursion
+            if(!com.empty()) {
+                //creates the new pointer 
+               if(check_semi(com)){
+                    if(next_com == nullptr) next_com = create_command(com);
+                    baseContainer.push_back(next_com);
+                }
+                else {
+                    if(next_com == nullptr) next_com = create_command(com);
+                    shared_ptr<Base> B = create_break(next_com,next_num);
+                    return build_par(B, tran);
+                }
+            }
+        }
+    }
+    if (!com.empty()){
+        if(cont){
+            //cout << com << endl;
+            if(next_com == nullptr) next_com = create_command(com);
+            return next_com;
+        }
+        else {
+            exit(1);
+        }
+    }
+    return nullptr;
+}
+
+//44
+shared_ptr<Base> Composite::build_par(shared_ptr<Base> A, stringstream& tran) {
+    string i,com;
+    int next_num;
+    bool cont = false;
+    shared_ptr<Base> next_com = nullptr;
+    
+    //loop until there is no string parts to parse through
+    while (tran >> i && !cont) {
+        //cout << "4" << endl;
+        //checks if the current iteration of the command is a break
+        //b1 checking
+        next_num = check_break(i);
+        //still making the command
+        if (next_num < 0) {
+            com += " ";
+            com += i;
+            if(check_Open_par(com)) {
+                next_com = parenthesis(com,tran);
+                com.clear();
+            }
+            else {
+                cont = check_Close_par(com);
+                break;
+            }
+            //b2 checking
+        }
+        else {
+            //makes sure there is a command to imput
+            if(!com.empty()) {
+                //creates the new pointer 
+                if(check_semi(com)){
+                     if(next_com == nullptr) next_com = create_command(com);
+                    return next_com;
+                }
+                else {
+                     if(next_com == nullptr) next_com = create_command(com);
+                    A->set_right(next_com);
+                    shared_ptr<Base> B = create_break(A,next_num);
+                    return build_par(B, tran);
+                }
+                
+            }
+        }
+    }
+    ///STOPS RECURSIVE CALLING
+    //there are no more string to read in and so caps it off as if there was a 
+    //semi-colon
+    if (!com.empty()){
+        if(cont) {
+            if(next_com == nullptr) next_com = create_command(com);
+            A->set_right(next_com);
+            return A;
+        }
+        else {
+            exit(1);
+        }
+    }
+    ///RECURSIVE CALLS AGIAN
+    //makes sure that linking logical objects are never without two children
+    else {
+        stringstream tra(unfinished_mod());
+        return build_par(A, tra);
+        
+    }
+    return nullptr;
+}
+
+//should only run if i is 1 0r 2
+shared_ptr<Base> Composite::create_break(shared_ptr<Base> prior, int i) {
+    shared_ptr<Base> ret = nullptr;
+    if (i == 0) ret = make_shared<AndObj> (prior);
+    else if (i == 1) ret = make_shared<OrObj> (prior);
+    return ret;
+}
+
+shared_ptr<Base> Composite::create_command(string com) {
+    shared_ptr<Base> ret = nullptr;
+    // if (check_Open_par(com)) {
+    //     //ping();
+    //     ret = parenthesis(com, tran);
+    // }
+    if(check_test(com)) ret = make_shared<TestObj>(com);
+    else {
+        ret = make_shared<Command>(com);
+        //cout << "command" << endl;
+    }
+    return ret;
+}
+
+
+//is called by activate and calls the builkd function which recurses
+//sets up one command and tells build the first logical break object to create
 
 //construtor that allows activate to be ran
 Composite::Composite() {

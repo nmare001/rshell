@@ -3,23 +3,40 @@
 #include "OrObj.h"
 #include "AndObj.h"
 #include "SemiObj.h"
+#include "TestObj.h"
 #include <boost/tokenizer.hpp>
 
 class Composite {
     protected:
         string leave = "exit";
-        bool cont;
         vector<shared_ptr<Base>> baseContainer;
+        
+        void run();
+        bool cont;
         void print_prompt();
         void print_prompt2();
         string unfinished_mod();
+        
+        bool check_path(string&);
+        bool check_bracket(string&);
         bool check_exit(string);
-        int check_break(string);
+        bool check_semi(string&);
+        int check_break(string&);
+        bool check_test(string& com);
+        bool check_Open_par(string& com);
+        bool check_Close_par(string& com);
+        
+        shared_ptr<Base> create_break(shared_ptr<Base> A, int i);
+        shared_ptr<Base> create_command(string com);
+        shared_ptr<Base> parenthesis(string com, stringstream& tran);
+        shared_ptr<Base> build_par(shared_ptr<Base> A, stringstream& tran);
+        
+        void build(shared_ptr<Base> A, stringstream& tran);
         void parse(string);
-        void run();
-        void build(shared_ptr<Command> A, int num, stringstream& tran);
-        bool check_semi(string);
         string remove_comment(string);
+        string b2_checking(string start, stringstream& tran);
+        
+        void ping();
     public:
         Composite();
         Composite(string);
