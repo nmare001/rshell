@@ -21,7 +21,7 @@ class Composite {
         bool check_bracket(string&);
         bool check_exit(string);
         bool check_semi(string&);
-        int check_break(string&);
+        int  check_break(string&);
         bool check_test(string& com);
         bool check_Open_par(string& com);
         bool check_Close_par(string& com);
