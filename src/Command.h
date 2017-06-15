@@ -13,6 +13,9 @@
 #include <sstream>
 #include <sys/wait.h>
 #include "Base.h"
+#include <fstream>
+//#include <inFile>
+//#include <outFile>
 using namespace std;
 
 class Command: public Base
@@ -35,5 +38,6 @@ class Command: public Base
         //will implement the the string as the string con
         virtual bool run();
         //will run the 
+        int test_red(string&, string&);
 };
 #endif 

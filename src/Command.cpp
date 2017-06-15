@@ -72,3 +72,12 @@ vector<char*> Command::trans() {
     return print;
     
 }
+
+//return 0 if none are found
+//return 1 if input redirection
+//return 2 if output redirection
+//return 3 if both
+//needs delete the arrows if there are any
+// int Command::test_red(string& in, string& out) {
+   
+// }
