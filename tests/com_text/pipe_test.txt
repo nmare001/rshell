@@ -1,0 +1,3 @@
+cat < existingInputFile | tr A-Z a-z | tee newOutputFile1 | tr a-z A-Z > newOutputFile2
+ls -1 | head -5 > test.txt
+date && ls | head -5 > test.txt

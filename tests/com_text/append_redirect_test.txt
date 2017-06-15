@@ -1,0 +1,3 @@
+ls << test.txt
+date && ls << test1.txt
+cat ls << test2.txt

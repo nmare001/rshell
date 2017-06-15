@@ -1,0 +1,4 @@
+g++ input_test.cpp
+test1.txt < ./a.out
+test2.txt < ./a.out
+
